@@ -138,6 +138,7 @@ func (this *HttpRequest) Post() error {
 		case reflect.String:
 			temp, _ := this.Param.(string)
 			this.ReqBody = bytes.NewBufferString(temp)
+			break
 		case reflect.Map:
 			param, _ := this.Param.(map[string]string)
 			if this.IsMultipart {
@@ -155,6 +156,7 @@ func (this *HttpRequest) Post() error {
 				}
 				this.ReqBody = bytes.NewBufferString(paramStr)
 			}
+			break
 		}
 	}
 
@@ -171,13 +173,37 @@ func (this *HttpRequest) Put() error {
 	return this.Exec("PUT", RealUrl)
 }
 
+func (this *HttpRequest) Head() error {
+	RealUrl := this.Host + this.Path
+	if this.Param != nil {
+		if temp, ok := this.Param.(string); ok {
+			this.ReqBody = bytes.NewBufferString(temp)
+		}
+	}
+	return this.Exec("HEAD", RealUrl)
+}
+
+func (this *HttpRequest) Delete() error {
+	RealUrl := this.Host + this.Path
+	if this.Param != nil {
+		if temp, ok := this.Param.(string); ok {
+			this.ReqBody = bytes.NewBufferString(temp)
+		}
+	}
+	return this.Exec("DELETE", RealUrl)
+}
+
 func (this *HttpRequest) Exec(method string, RealUrl string) error {
-	request, err := http.NewRequest(method, RealUrl, nil)
+	request, err := http.NewRequest(method, RealUrl, this.ReqBody)
 	if err != nil {
 		return err
 	}
 	if this.Keeplive {
 		request.Header.Set("Connection", "Keep-Alive")
+	}
+	if this.IsMultipart {
+		println("Content-Type", this.ContentType)
+		request.Header.Set("Content-Type", this.ContentType)
 	}
 	response, err := this.Client.Do(request)
 	if err != nil {
@@ -194,8 +220,17 @@ func (this *HttpRequest) Exec(method string, RealUrl string) error {
 }
 
 func main() {
-	host := "http://10.16.15.120:8080"
+	host := "http://10.108.87.71:7997"
 	httpTest := NewHttpRequest(host, "POST", 20)
+	postMap := make(map[string]string, 5)
+	postMap["a1234567"] = "aaaaaaa"
+	postMap["b1234567"] = "bbbbbbb"
+	postMap["c1234567"] = "ccccccc"
+	postMap["d1234567"] = "ddddddd"
+	postMap["e1234567"] = "eeeeeee"
+	httpTest.SetParams("postMap")
+	// httpTest.SetMultipart()
+
 	if err := httpTest.Post(); err != nil {
 		panic(err.Error())
 	}

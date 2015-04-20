@@ -16,6 +16,9 @@ func init() {
 
 }
 
+// TODO 默认的content-type，是否可以不用设置？
+var DefaultContentType = "application/x-www-form-urlencoded"
+
 // 暂时不支持cookie
 type HttpRequest struct {
 	Method       string
@@ -88,12 +91,11 @@ func NewHttpRequest(host string, method string, timeout int) *HttpRequest {
 		Timeout: time.Duration(timeout) * time.Second,
 	}
 	return &HttpRequest{
-		Host:        host,
-		Method:      method,
-		Timeout:     timeout,
-		Client:      client,
-		Keeplive:    false,
-		ContentType: "application/x-www-form-urlencoded",
+		Host:     host,
+		Method:   method,
+		Timeout:  timeout,
+		Client:   client,
+		Keeplive: false,
 	}
 }
 
@@ -107,7 +109,7 @@ func (this *HttpRequest) ResponeBody() string {
 	return this.RespBody
 }
 
-// Get请求
+// Get请求，参数都在请求的URL中
 func (this *HttpRequest) Get() error {
 	RealUrl := this.Host + this.Path
 	if this.Param != nil {
@@ -129,6 +131,7 @@ func (this *HttpRequest) Get() error {
 	return this.Exec("GET", RealUrl)
 }
 
+// POST请求，支持application和multipart两种传输方式，默认是application
 func (this *HttpRequest) Post() error {
 	RealUrl := this.Host + this.Path
 	if this.Param != nil {
@@ -163,6 +166,7 @@ func (this *HttpRequest) Post() error {
 	return this.Exec("POST", RealUrl)
 }
 
+// PUT请求，数据格式string
 func (this *HttpRequest) Put() error {
 	RealUrl := this.Host + this.Path
 	if this.Param != nil {
@@ -173,6 +177,7 @@ func (this *HttpRequest) Put() error {
 	return this.Exec("PUT", RealUrl)
 }
 
+// HEAD请求
 func (this *HttpRequest) Head() error {
 	RealUrl := this.Host + this.Path
 	if this.Param != nil {
@@ -183,6 +188,7 @@ func (this *HttpRequest) Head() error {
 	return this.Exec("HEAD", RealUrl)
 }
 
+// DELETE请求
 func (this *HttpRequest) Delete() error {
 	RealUrl := this.Host + this.Path
 	if this.Param != nil {
@@ -193,6 +199,7 @@ func (this *HttpRequest) Delete() error {
 	return this.Exec("DELETE", RealUrl)
 }
 
+// HTTP请求的具体执行方法
 func (this *HttpRequest) Exec(method string, RealUrl string) error {
 	request, err := http.NewRequest(method, RealUrl, this.ReqBody)
 	if err != nil {
@@ -229,7 +236,7 @@ func main() {
 	postMap["d1234567"] = "ddddddd"
 	postMap["e1234567"] = "eeeeeee"
 	httpTest.SetParams("postMap")
-	// httpTest.SetMultipart()
+	httpTest.SetMultipart()
 
 	if err := httpTest.Post(); err != nil {
 		panic(err.Error())
